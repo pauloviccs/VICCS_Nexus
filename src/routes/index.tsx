@@ -10,7 +10,7 @@ import webDesign from "@/assets/web-design.jpg";
 import ideSkills from "@/assets/ide-skills.jpg";
 import brandIcon from "@/assets/brand/VICCS_Design_Icon_BWR.svg";
 import brandLogo from "@/assets/brand/VICCS_Design_Logo_txt.svg";
-import character from "@/assets/brand/VICCS_CharacterSideProfile.svg";
+import { HoloCharacterCard } from "@/components/holo-character-card";
 
 const demoProjects: HubProject[] = [
   { id: "demo-1", title: "Aurora Design System", slug: "aurora", description: "Uma biblioteca visual para produtos digitais coesos, rápidos e expressivos.", category: "Sistemas", url: "#", image_url: featuredImage, tags: ["Web", "Design System"], featured: true, published: true, sort_order: 0, created_by: null, created_at: "", updated_at: "" },
@@ -58,7 +58,10 @@ function Index() {
           <Link to="/auth" className="flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground"><span className="size-1.5 rounded-full bg-muted-foreground" />Admin</Link>
         </header>
 
-        <section id="sobre" className="relative pb-10 pt-6 sm:pt-10"><img src={character} alt="" className="pointer-events-none absolute -right-20 bottom-0 hidden h-[520px] w-auto opacity-20 mix-blend-luminosity lg:block" /><div className="relative flex flex-col justify-between gap-8 lg:flex-row lg:items-end"><div className="max-w-3xl"><img src={brandLogo} alt="VICCS Design" className="mb-7 h-8 w-auto brightness-0 invert opacity-80" /><div className="glass mb-6 inline-flex items-center gap-2 rounded-full px-3 py-1"><Sparkles className="size-3 text-accent" /><span className="text-xs text-foreground/70">{settings?.eyebrow ?? "Uma lente viva para cada criação"}</span></div><h1 className="max-w-[18ch] text-balance font-display text-4xl font-semibold leading-[1.02] sm:text-6xl lg:text-7xl">{settings?.headline ?? "Um universo de projetos, reunido em um só lugar."}</h1><p className="mt-6 max-w-2xl text-pretty text-base leading-7 text-muted-foreground lg:text-lg">{settings?.description ?? "Explore sites, sistemas, mods, experiências de web design, código e skills para IDE."}</p></div>
+        <section id="sobre" className="relative pb-10 pt-6 sm:pt-10">
+          <HoloCharacterCard />
+          <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
+            <div className="max-w-3xl"><img src={brandLogo} alt="VICCS Design" className="mb-7 h-8 w-auto brightness-0 invert opacity-80" /><div className="glass mb-6 inline-flex items-center gap-2 rounded-full px-3 py-1"><Sparkles className="size-3 text-accent" /><span className="text-xs text-foreground/70">{settings?.eyebrow ?? "Uma lente viva para cada criação"}</span></div><h1 className="max-w-[18ch] text-balance font-display text-4xl font-semibold leading-[1.02] sm:text-6xl lg:text-7xl">{settings?.headline ?? "Um universo de projetos, reunido em um só lugar."}</h1><p className="mt-6 max-w-2xl text-pretty text-base leading-7 text-muted-foreground lg:text-lg">{settings?.description ?? "Explore sites, sistemas, mods, experiências de web design, código e skills para IDE."}</p></div>
             <div className="glass-deep w-full shrink-0 rounded-2xl p-5 lg:w-[390px]"><label className="flex items-center gap-3 rounded-xl border border-border bg-background/40 px-4 py-3"><Search className="size-4 text-muted-foreground" /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar projetos, mods, skills…" className="w-full bg-transparent text-sm outline-hidden placeholder:text-muted-foreground" /></label><p className="mb-3 mt-5 text-[10px] uppercase text-muted-foreground">Filtrar por categoria</p><div className="flex flex-wrap gap-2">{categories.map((item) => <Button key={item} type="button" size="sm" variant={category === item ? "default" : "outline"} className="h-8 rounded-full" onClick={() => setCategory(item)}>{item}</Button>)}</div></div>
           </div></section>
 
