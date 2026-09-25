@@ -40,8 +40,24 @@ function createSupabaseClient() {
       ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
     ];
     const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
-    console.error(`[Supabase] ${message}`);
-    throw new Error(message);
+    console.warn(`[Supabase] ${message}`);
+    return {
+      auth: {
+        getSession: async () => ({ data: { session: null }, error: null }),
+        getUser: async () => ({ data: { user: null }, error: null }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+        signInWithPassword: async () => ({ data: null, error: new Error(message) }),
+        signUp: async () => ({ data: null, error: new Error(message) }),
+        signOut: async () => ({ error: null }),
+      },
+      from: () => ({
+        select: () => ({
+          eq: () => ({ maybeSingle: async () => ({ data: null, error: new Error(message) }) }),
+          order: () => Promise.resolve({ data: [], error: new Error(message) }),
+        }),
+      }),
+      rpc: async () => ({ data: null, error: new Error(message) }),
+    } as unknown as ReturnType<typeof createClient<Database>>;
   }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
