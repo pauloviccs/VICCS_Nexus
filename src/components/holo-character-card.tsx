@@ -2,7 +2,9 @@ import { useState, useRef, useCallback } from "react";
 import characterSvg from "@/assets/brand/VICCS_CharacterSideProfile.svg";
 import brandIcon from "@/assets/brand/VICCS_Design_Icon_BWR.svg";
 
-export function HoloCharacterCard() {
+import { cn } from "@/lib/utils";
+
+export function HoloCharacterCard({ className }: { className?: string } = {}) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState({
     x: 50,
@@ -47,7 +49,10 @@ export function HoloCharacterCard() {
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
       aria-label="VICCS Character Holo Card"
-      className="holo-card-wrapper pointer-events-auto absolute -right-12 xl:-right-6 bottom-0 z-0 hidden lg:block select-none"
+      className={cn(
+        "holo-card-wrapper pointer-events-auto absolute right-0 xl:right-2 bottom-0 z-10 hidden lg:block select-none",
+        className
+      )}
       style={{
         perspective: "1000px",
         width: "380px",
@@ -55,7 +60,8 @@ export function HoloCharacterCard() {
       }}
     >
       <div
-        className="holo-card relative h-full w-full rounded-3xl overflow-hidden border"
+        suppressHydrationWarning
+        className="holo-card relative h-full w-full rounded-3xl overflow-hidden border select-none pointer-events-none"
         style={{
           transform: state.active
             ? `rotateX(${state.rx}deg) rotateY(${state.ry}deg) scale3d(1.02, 1.02, 1.02)`
@@ -142,12 +148,16 @@ export function HoloCharacterCard() {
         </div>
 
         {/* Character SVG with 3D Parallax Depth */}
-        <div className="absolute inset-x-0 bottom-0 top-12 z-5 flex items-end justify-center overflow-hidden">
+        <div className="absolute inset-x-0 bottom-0 top-12 z-5 flex items-end justify-center overflow-hidden pointer-events-none select-none">
           <img
             src={characterSvg}
             alt="VICCS Character Side Profile"
-            className="h-[450px] w-auto max-w-none object-contain transition-all duration-300"
+            draggable={false}
+            onDragStart={(e) => e.preventDefault()}
+            className="h-[450px] w-auto max-w-none object-contain transition-all duration-300 pointer-events-none select-none"
             style={{
+              userSelect: "none",
+              WebkitUserDrag: "none" as unknown as undefined,
               transform: state.active
                 ? `translate3d(${state.ry * 0.35}px, ${-state.rx * 0.25}px, 20px) scale(1.03)`
                 : "translate3d(0, 0, 0) scale(1)",
