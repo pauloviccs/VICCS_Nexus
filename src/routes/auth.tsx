@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { lovable } from "@/integrations/lovable";
 import { supabase } from "@/integrations/supabase/client";
-import brandIcon from "@/assets/brand/VICCS_Design_Icon_BWR.svg.asset.json";
+import brandIcon from "@/assets/brand/VICCS_Design_Icon_BWR.svg";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -74,7 +74,7 @@ function AuthPage() {
           <ArrowLeft className="size-4" /> Voltar ao hub
         </Link>
         <div className="mb-7 flex items-center gap-3">
-          <span className="lens grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl"><img src={brandIcon.url} alt="" className="h-full w-full object-cover" /></span>
+          <span className="lens grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl"><img src={brandIcon} alt="" className="h-full w-full object-cover" /></span>
           <div><p className="font-display text-xl font-semibold">NEXUS</p><p className="text-xs text-muted-foreground">Acesso administrativo</p></div>
         </div>
         <h1 className="font-display text-3xl font-semibold">{mode === "signin" ? "Bem-vindo de volta." : "Criar acesso."}</h1>

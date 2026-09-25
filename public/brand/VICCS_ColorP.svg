@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Camada_2" data-name="Camada 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 314.54 201.77">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #ff7d2c;
+      }
+
+      .cls-2 {
+        fill: #023050;
+      }
+
+      .cls-3 {
+        fill: #049498;
+      }
+
+      .cls-4 {
+        fill: #f7e2d1;
+      }
+
+      .cls-5 {
+        fill: #004f7b;
+      }
+
+      .cls-6 {
+        fill: #031626;
+      }
+    </style>
+  </defs>
+  <g id="Design_Elements" data-name="Design Elements">
+    <g id="Colors">
+      <g>
+        <rect class="cls-6" x="0" y="0" width="89.77" height="89.77" rx="44.89" ry="44.89"/>
+        <rect class="cls-2" x="112.39" y="0" width="89.77" height="89.77" rx="44.89" ry="44.89"/>
+        <rect class="cls-5" x="224.77" y="0" width="89.77" height="89.77" rx="44.89" ry="44.89"/>
+      </g>
+      <g>
+        <rect class="cls-3" x="0" y="112" width="89.77" height="89.77" rx="44.89" ry="44.89"/>
+        <rect class="cls-1" x="112.39" y="112" width="89.77" height="89.77" rx="44.89" ry="44.89"/>
+        <rect class="cls-4" x="224.77" y="112" width="89.77" height="89.77" rx="44.89" ry="44.89"/>
+      </g>
+    </g>
+  </g>
+</svg>
