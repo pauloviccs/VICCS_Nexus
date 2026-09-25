@@ -50,7 +50,7 @@ export function HoloCharacterCard({ className }: { className?: string } = {}) {
       onPointerLeave={handlePointerLeave}
       aria-label="VICCS Character Holo Card"
       className={cn(
-        "holo-card-wrapper pointer-events-auto absolute right-0 xl:right-2 bottom-0 z-10 hidden lg:block select-none",
+        "holo-card-wrapper pointer-events-auto absolute right-0 xl:right-4 top-1/2 -translate-y-1/2 z-10 hidden lg:block select-none",
         className
       )}
       style={{

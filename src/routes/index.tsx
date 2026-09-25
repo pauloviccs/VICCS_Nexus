@@ -59,8 +59,8 @@ function Index() {
           <nav className="glass flex items-center gap-1 rounded-full p-1.5"><a href="#catalogo" className="rounded-full bg-foreground/10 px-4 py-1.5 text-sm">Catálogo</a><a href="#sobre" className="rounded-full px-4 py-1.5 text-sm text-muted-foreground hover:text-foreground">Sobre</a></nav>
         </header>
 
-        <section id="sobre" className="relative min-h-[460px] pb-12 pt-6 sm:pt-10 lg:min-h-[540px] lg:flex lg:flex-col lg:justify-center">
-          <HoloCharacterCard className="right-0 xl:right-2 bottom-0" />
+        <section id="sobre" className="relative min-h-[500px] py-10 sm:py-14 lg:min-h-[600px] lg:py-16 lg:flex lg:flex-col lg:justify-center">
+          <HoloCharacterCard className="right-0 xl:right-4 top-1/2 -translate-y-1/2" />
           <div className="relative z-10 max-w-xl lg:max-w-2xl xl:max-w-3xl pr-4">
             <img src={brandLogo} alt="VICCS Design" className="mb-7 h-8 w-auto brightness-0 invert opacity-80" />
             <div className="glass mb-6 inline-flex items-center gap-2 rounded-full px-3 py-1">
@@ -76,7 +76,7 @@ function Index() {
           </div>
         </section>
 
-        <section id="catalogo" className="pb-16 pt-2">
+        <section id="catalogo" className="pb-16 pt-6 sm:pt-8">
           {/* Menu Horizontal de Filtros e Busca Liquid Glass */}
           <div className="glass-deep mb-6 rounded-2xl p-3 sm:p-4 border border-border/40 shadow-xl">
             <div className="flex flex-col gap-3.5 md:flex-row md:items-center md:justify-between">
@@ -160,7 +160,7 @@ function Index() {
         </section>
         <footer className="flex flex-col items-center justify-between gap-4 border-t border-border py-8 sm:flex-row">
           <p className="text-sm text-muted-foreground">{settings?.hub_name ?? "NEXUS"} — cada lente abre uma nova criação.</p>
-          <Link to="/auth" className="flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
+          <Link to="/dashboard" className="flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
             <Settings2 className="size-3.5" /> Acesso administrativo
           </Link>
         </footer>
@@ -222,7 +222,14 @@ function ProjectCard({
         </button>
       </div>
 
-      <div className={`overflow-hidden rounded-xl bg-muted ${featured ? "aspect-video" : "aspect-[16/10]"}`}>
+      {/* Imagem do Projeto */}
+      <div
+        className={`overflow-hidden rounded-xl bg-muted relative ${
+          featured
+            ? "flex-1 min-h-[260px] sm:min-h-[320px] lg:min-h-[380px]"
+            : "aspect-[16/10] shrink-0"
+        }`}
+      >
         <img
           src={image}
           alt={project.title}
@@ -232,19 +239,40 @@ function ProjectCard({
           draggable={false}
           className="h-full w-full object-cover select-none transition-transform duration-700 group-hover:scale-[1.03]"
         />
+        {featured && (
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-80" />
+        )}
       </div>
 
-      <div className="mt-5 flex flex-1 flex-col justify-between">
+      {/* Conteúdo com layout equilibrado sem vácuo */}
+      <div
+        className={`mt-4 flex ${
+          featured
+            ? "shrink-0 flex-col gap-3.5"
+            : "flex-1 flex-col justify-between"
+        }`}
+      >
         <div>
-          <h2 className={`font-display font-semibold text-foreground ${featured ? "text-2xl" : "text-lg"}`}>
+          <h2
+            className={`font-display font-semibold text-foreground ${
+              featured ? "text-2xl sm:text-3xl" : "text-lg"
+            }`}
+          >
             {project.title}
           </h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground line-clamp-2">
+          <p
+            className={`mt-2 text-muted-foreground ${
+              featured
+                ? "text-sm sm:text-base leading-relaxed line-clamp-3 sm:line-clamp-4"
+                : "text-sm leading-6 line-clamp-2"
+            }`}
+          >
             {project.description}
           </p>
         </div>
+
         {project.tags && project.tags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             {project.tags.map((tag) => (
               <span
                 key={tag}
@@ -253,6 +281,17 @@ function ProjectCard({
                 #{tag}
               </span>
             ))}
+          </div>
+        )}
+
+        {featured && (
+          <div className="flex items-center justify-between border-t border-border/40 pt-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5 font-medium text-foreground/80">
+              <Sparkles className="size-3.5 text-accent" /> Projeto Principal do Hub
+            </span>
+            <span className="flex items-center gap-1 font-semibold text-primary transition-transform group-hover:translate-x-0.5">
+              Ver Detalhes <ArrowUpRight className="size-3.5" />
+            </span>
           </div>
         )}
       </div>

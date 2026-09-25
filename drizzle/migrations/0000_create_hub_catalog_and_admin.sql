@@ -91,12 +91,11 @@ BEGIN
   VALUES (new.id, COALESCE(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)), new.raw_user_meta_data->>'avatar_url')
   ON CONFLICT (id) DO NOTHING;
 
-  PERFORM pg_advisory_xact_lock(740281);
-  IF NOT EXISTS (SELECT 1 FROM public.user_roles WHERE role = 'admin') THEN
-    INSERT INTO public.user_roles (user_id, role) VALUES (new.id, 'admin') ON CONFLICT DO NOTHING;
-  ELSE
-    INSERT INTO public.user_roles (user_id, role) VALUES (new.id, 'user') ON CONFLICT DO NOTHING;
-  END IF;
+  -- Novos usuários recebem estritamente o cargo comum 'user'.
+  -- Privilégios de 'admin' devem ser atribuídos explicitamente no banco de dados.
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (new.id, 'user')
+  ON CONFLICT (user_id, role) DO NOTHING;
   RETURN new;
 END;
 $$;

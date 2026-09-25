@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
+  Crop,
   Eye,
   ExternalLink,
   Globe,
+  Image as ImageIcon,
   LoaderCircle,
   LogOut,
   Plus,
@@ -12,6 +14,7 @@ import {
   Sparkles,
   Tag,
   Trash2,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -21,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { ProjectPreviewModal } from "@/components/project-preview-modal";
+import { ImageCropModal } from "@/components/image-crop-modal";
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 type Settings = Database["public"]["Tables"]["site_settings"]["Row"];
@@ -58,6 +62,35 @@ function DashboardPage() {
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
   const [previewProject, setPreviewProject] = useState<Project | null>(null);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [cropInitialSrc, setCropInitialSrc] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowed.includes(file.type)) {
+      toast.error("Formato não suportado. Selecione um arquivo JPEG, PNG ou WebP.");
+      return;
+    }
+
+    const objUrl = URL.createObjectURL(file);
+    setCropInitialSrc(objUrl);
+    setCropModalOpen(true);
+    e.target.value = "";
+  }
+
+  function openCropForExistingImage() {
+    if (!form.image_url) return;
+    setCropInitialSrc(form.image_url);
+    setCropModalOpen(true);
+  }
+
+  function handleCropComplete({ url }: { url: string; blob: Blob }) {
+    setForm((prev) => ({ ...prev, image_url: url }));
+  }
 
   async function load() {
     const [role, projectRows, settingRow] = await Promise.all([
@@ -296,13 +329,98 @@ function DashboardPage() {
               </Field>
 
               <div className="sm:col-span-2">
-                <Field label="Capa do Projeto (URL da Imagem)">
-                  <Input
-                    type="text"
-                    value={form.image_url}
-                    placeholder="https://exemplo.com/imagem.jpg ou caminho local"
-                    onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                  />
+                <Field label="Capa do Projeto (URL da Imagem ou Arquivo Local)">
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                      <div className="relative flex-1">
+                        <Input
+                          type="text"
+                          value={form.image_url}
+                          placeholder="https://exemplo.com/imagem.jpg ou faça upload local"
+                          onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+                          className="pr-10"
+                        />
+                        {form.image_url && (
+                          <button
+                            type="button"
+                            onClick={() => setForm({ ...form, image_url: "" })}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            title="Limpar URL"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="gap-2 rounded-xl bg-background/50 hover:bg-background/80 shrink-0"
+                        >
+                          <Upload className="size-4 text-primary" /> Fazer Upload
+                        </Button>
+
+                        {form.image_url && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={openCropForExistingImage}
+                            className="gap-2 rounded-xl shrink-0"
+                            title="Abrir ferramenta de recorte e ajustes para esta capa"
+                          >
+                            <Crop className="size-4" /> Recortar / Ajustar
+                          </Button>
+                        )}
+                      </div>
+
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                    </div>
+
+                    {/* Mini Preview da Capa Selecionada */}
+                    {form.image_url && (
+                      <div className="relative flex items-center gap-4 rounded-xl border border-border/40 bg-muted/20 p-3">
+                        <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-black/40">
+                          <img
+                            src={form.image_url}
+                            alt="Pré-visualização da capa"
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = "none";
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">
+                            {form.image_url.startsWith("data:")
+                              ? "Imagem local recortada (WebP)"
+                              : form.image_url.split("/").pop() || "Capa do Projeto"}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {form.image_url.includes("supabase.co")
+                              ? "✓ Armazenada no Supabase Storage (bucket: project-covers)"
+                              : "URL externa ou recurso local"}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setForm({ ...form, image_url: "" })}
+                          className="h-8 text-xs text-destructive hover:bg-destructive/10"
+                        >
+                          Remover
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </Field>
               </div>
 
@@ -574,6 +692,14 @@ function DashboardPage() {
         project={previewProject}
         isOpen={!!previewProject}
         onClose={() => setPreviewProject(null)}
+      />
+
+      {/* Modal de Recorte e Ajustes de Imagem */}
+      <ImageCropModal
+        open={cropModalOpen}
+        onOpenChange={setCropModalOpen}
+        initialImageSrc={cropInitialSrc}
+        onComplete={handleCropComplete}
       />
     </main>
   );
