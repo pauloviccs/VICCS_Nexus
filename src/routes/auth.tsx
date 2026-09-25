@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { lovable } from "@/integrations/lovable";
 import { supabase } from "@/integrations/supabase/client";
+import brandIcon from "@/assets/brand/VICCS_Design_Icon_BWR.svg.asset.json";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -73,7 +74,7 @@ function AuthPage() {
           <ArrowLeft className="size-4" /> Voltar ao hub
         </Link>
         <div className="mb-7 flex items-center gap-3">
-          <span className="lens grid size-11 shrink-0 place-items-center rounded-xl"><Sparkles className="size-5 text-primary" /></span>
+          <span className="lens grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl"><img src={brandIcon.url} alt="" className="h-full w-full object-cover" /></span>
           <div><p className="font-display text-xl font-semibold">NEXUS</p><p className="text-xs text-muted-foreground">Acesso administrativo</p></div>
         </div>
         <h1 className="font-display text-3xl font-semibold">{mode === "signin" ? "Bem-vindo de volta." : "Criar acesso."}</h1>
@@ -86,9 +87,9 @@ function AuthPage() {
         </form>
         <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" />ou<span className="h-px flex-1 bg-border" /></div>
         <Button type="button" variant="outline" className="h-11 w-full rounded-xl bg-background/20" onClick={signInWithGoogle} disabled={loading}><Chrome /> Continuar com Google</Button>
-        <button type="button" onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setMessage(""); }} className="mt-6 w-full text-center text-sm text-muted-foreground transition-colors hover:text-foreground">
+        <Button type="button" variant="link" onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setMessage(""); }} className="mt-6 w-full text-center text-sm text-muted-foreground">
           {mode === "signin" ? "Primeiro acesso? Criar conta" : "Já tem uma conta? Entrar"}
-        </button>
+        </Button>
       </div>
     </main>
   );
