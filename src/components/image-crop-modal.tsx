@@ -478,7 +478,7 @@ export function ImageCropModal({
                   min={1}
                   max={3}
                   step={0.05}
-                  onValueChange={([val]) => setZoom(val)}
+                  onValueChange={([val]) => setZoom(val ?? 1)}
                   className="py-1"
                 />
               </div>
@@ -496,7 +496,7 @@ export function ImageCropModal({
                   min={-45}
                   max={45}
                   step={1}
-                  onValueChange={([val]) => setRotation(val)}
+                  onValueChange={([val]) => setRotation(val ?? 0)}
                   className="py-1"
                 />
               </div>
@@ -571,7 +571,7 @@ export function ImageCropModal({
                   min={50}
                   max={150}
                   step={1}
-                  onValueChange={([val]) => setBrightness(val)}
+                  onValueChange={([val]) => setBrightness(val ?? 100)}
                   className="py-1"
                 />
               </div>
@@ -589,7 +589,7 @@ export function ImageCropModal({
                   min={50}
                   max={150}
                   step={1}
-                  onValueChange={([val]) => setContrast(val)}
+                  onValueChange={([val]) => setContrast(val ?? 100)}
                   className="py-1"
                 />
               </div>
@@ -607,7 +607,7 @@ export function ImageCropModal({
                   min={0}
                   max={200}
                   step={1}
-                  onValueChange={([val]) => setSaturation(val)}
+                  onValueChange={([val]) => setSaturation(val ?? 100)}
                   className="py-1"
                 />
               </div>

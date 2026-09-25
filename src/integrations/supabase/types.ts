@@ -99,6 +99,7 @@ export type Database = {
           headline: string
           hub_name: string
           id: string
+          social_links: Record<string, string> | null
           updated_at: string
           updated_by: string | null
         }
@@ -108,6 +109,7 @@ export type Database = {
           headline?: string
           hub_name?: string
           id?: string
+          social_links?: Record<string, string> | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -117,6 +119,7 @@ export type Database = {
           headline?: string
           hub_name?: string
           id?: string
+          social_links?: Record<string, string> | null
           updated_at?: string
           updated_by?: string | null
         }

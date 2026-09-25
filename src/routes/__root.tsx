@@ -140,9 +140,12 @@ function RootComponent() {
         void router.invalidate();
         if (event !== "SIGNED_OUT") void queryClient.invalidateQueries();
       });
-      return () => data?.subscription?.unsubscribe?.();
+      return () => {
+        data?.subscription?.unsubscribe?.();
+      };
     } catch (e) {
       console.warn("[Root] Supabase auth listener skipped:", e);
+      return undefined;
     }
   }, [queryClient, router]);
 

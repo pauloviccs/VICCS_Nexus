@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, Search, Settings2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getPublicHub, type HubProject } from "@/lib/hub.functions";
+import { getPublicHub, type HubProject, type HubSettings } from "@/lib/hub.functions";
+import { supabase } from "@/integrations/supabase/client";
 import featuredImage from "@/assets/featured-optical.jpg";
 import simsInterior from "@/assets/sims-interior.jpg";
 import simsCharacter from "@/assets/sims-character.jpg";
@@ -12,6 +13,7 @@ import brandIcon from "@/assets/brand/VICCS_Design_Icon_BWR.svg";
 import brandLogo from "@/assets/brand/VICCS_Design_Logo_txt.svg";
 import { HoloCharacterCard } from "@/components/holo-character-card";
 import { ProjectPreviewModal } from "@/components/project-preview-modal";
+import { SocialNav } from "@/components/social-nav";
 
 const demoProjects: HubProject[] = [
   { id: "demo-1", title: "Aurora Design System", slug: "aurora", description: "Uma biblioteca visual para produtos digitais coesos, rápidos e expressivos.", category: "Sistemas", url: "#", image_url: featuredImage, tags: ["Web", "Design System"], featured: true, published: true, sort_order: 0, created_by: null, created_at: "", updated_at: "" },
@@ -36,14 +38,53 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const loaded = Route.useLoaderData();
-  const projects = loaded.projects.length ? loaded.projects : demoProjects;
-  const settings = loaded.settings;
+  const [projects, setProjects] = useState<HubProject[]>(loaded.projects ?? []);
+  const [settings, setSettings] = useState<HubSettings | null>(loaded.settings ?? null);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Todos");
   const [selectedProject, setSelectedProject] = useState<HubProject | null>(null);
   const glow = useRef<HTMLDivElement>(null);
-  const categories = ["Todos", ...Array.from(new Set(projects.map((p) => p.category)))];
-  const shown = useMemo(() => projects.filter((p) => (category === "Todos" || p.category === category) && `${p.title} ${p.description} ${p.tags.join(" ")}`.toLowerCase().includes(query.toLowerCase())), [projects, query, category]);
+
+  // Sincronizar em tempo real com o Supabase no client
+  useEffect(() => {
+    async function syncRealtime() {
+      try {
+        const [pRes, sRes] = await Promise.all([
+          supabase
+            .from("projects")
+            .select("id,title,slug,description,category,url,image_url,tags,featured,published,sort_order,created_by,created_at,updated_at")
+            .eq("published", true)
+            .order("featured", { ascending: false })
+            .order("sort_order", { ascending: true }),
+          supabase.from("site_settings").select("*").eq("id", "main").maybeSingle(),
+        ]);
+
+        if (pRes.data && pRes.data.length > 0) {
+          setProjects(pRes.data);
+        }
+        if (sRes.data) {
+          setSettings(sRes.data);
+        }
+      } catch (e) {
+        console.warn("[Index] Sincronização em tempo real:", e);
+      }
+    }
+    void syncRealtime();
+  }, []);
+
+  const displayProjects = projects.length > 0 ? projects : (loaded.projects?.length ? loaded.projects : demoProjects);
+  const isDemo = !projects.length && !loaded.projects?.length;
+
+  const categories = ["Todos", ...Array.from(new Set(displayProjects.map((p) => p.category)))];
+  const shown = useMemo(
+    () =>
+      displayProjects.filter(
+        (p) =>
+          (category === "Todos" || p.category === category) &&
+          `${p.title} ${p.description} ${p.tags.join(" ")}`.toLowerCase().includes(query.toLowerCase())
+      ),
+    [displayProjects, query, category]
+  );
 
   useEffect(() => {
     const move = (event: PointerEvent) => { if (glow.current) glow.current.style.transform = `translate3d(${event.clientX}px, ${event.clientY}px, 0)`; };
@@ -54,9 +95,26 @@ function Index() {
     <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <div className="refract pointer-events-none absolute inset-0" /><div ref={glow} className="cursor-glow" aria-hidden="true" />
       <div className="relative z-10 mx-auto max-w-[1360px] px-5 sm:px-6 lg:px-10">
-        <header className="flex items-center justify-between py-5 sm:py-6">
-          <a href="#catalogo" className="flex items-center gap-3"><span className="lens grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl"><img src={brandIcon} alt="" className="h-full w-full object-cover" /></span><span className="flex flex-col leading-none"><strong className="font-display text-lg font-semibold">{settings?.hub_name ?? "NEXUS"}</strong><span className="mt-1 text-[10px] uppercase text-muted-foreground">by VICCS Design</span></span></a>
-          <nav className="glass flex items-center gap-1 rounded-full p-1.5"><a href="#catalogo" className="rounded-full bg-foreground/10 px-4 py-1.5 text-sm">Catálogo</a><a href="#sobre" className="rounded-full px-4 py-1.5 text-sm text-muted-foreground hover:text-foreground">Sobre</a></nav>
+        <header className="flex flex-wrap items-center justify-between gap-4 py-5 sm:py-6">
+          <a href="#catalogo" className="flex items-center gap-3">
+            <span className="lens grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl">
+              <img src={brandIcon} alt="" className="h-full w-full object-cover" />
+            </span>
+            <span className="flex flex-col leading-none">
+              <strong className="font-display text-lg font-semibold">{settings?.hub_name ?? "NEXUS"}</strong>
+              <span className="mt-1 text-[10px] uppercase text-muted-foreground">by VICCS Design</span>
+            </span>
+          </a>
+
+          {/* Barra de Redes Sociais Centralizada em Liquid Glass */}
+          <div className="order-3 w-full sm:order-2 sm:w-auto flex justify-center">
+            <SocialNav links={settings?.social_links} />
+          </div>
+
+          <nav className="order-2 sm:order-3 glass flex items-center gap-1 rounded-full p-1.5">
+            <a href="#catalogo" className="rounded-full bg-foreground/10 px-4 py-1.5 text-sm">Catálogo</a>
+            <a href="#sobre" className="rounded-full px-4 py-1.5 text-sm text-muted-foreground hover:text-foreground">Sobre</a>
+          </nav>
         </header>
 
         <section id="sobre" className="relative min-h-[500px] py-10 sm:py-14 lg:min-h-[600px] lg:py-16 lg:flex lg:flex-col lg:justify-center">
@@ -133,7 +191,7 @@ function Index() {
             <p className="text-sm font-medium text-muted-foreground">
               {shown.length} {shown.length === 1 ? "projeto" : "projetos"}
             </p>
-            {!loaded.projects.length && (
+            {isDemo && (
               <span className="glass rounded-full px-3 py-1 text-[10px] uppercase text-muted-foreground">
                 Conteúdo demonstrativo
               </span>
@@ -160,6 +218,7 @@ function Index() {
         </section>
         <footer className="flex flex-col items-center justify-between gap-4 border-t border-border py-8 sm:flex-row">
           <p className="text-sm text-muted-foreground">{settings?.hub_name ?? "NEXUS"} — cada lente abre uma nova criação.</p>
+          <SocialNav links={settings?.social_links} />
           <Link to="/dashboard" className="flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
             <Settings2 className="size-3.5" /> Acesso administrativo
           </Link>

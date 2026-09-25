@@ -157,7 +157,6 @@ export function HoloCharacterCard({ className }: { className?: string } = {}) {
             className="h-[450px] w-auto max-w-none object-contain transition-all duration-300 pointer-events-none select-none"
             style={{
               userSelect: "none",
-              WebkitUserDrag: "none" as unknown as undefined,
               transform: state.active
                 ? `translate3d(${state.ry * 0.35}px, ${-state.rx * 0.25}px, 20px) scale(1.03)`
                 : "translate3d(0, 0, 0) scale(1)",

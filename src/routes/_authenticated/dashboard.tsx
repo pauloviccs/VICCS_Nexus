@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { ProjectPreviewModal } from "@/components/project-preview-modal";
 import { ImageCropModal } from "@/components/image-crop-modal";
+import { SOCIAL_NETWORKS, SocialNav, type SocialLinksData } from "@/components/social-nav";
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 type Settings = Database["public"]["Tables"]["site_settings"]["Row"];
@@ -66,6 +67,19 @@ function DashboardPage() {
   const [cropInitialSrc, setCropInitialSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Abas de navegação do painel
+  const [activeTab, setActiveTab] = useState<"projects" | "hero" | "social" | "all">("projects");
+  const [socialLinks, setSocialLinks] = useState<SocialLinksData>({
+    youtube: "",
+    tiktok: "",
+    twitch: "",
+    kick: "",
+    instagram: "",
+    twitter: "",
+    donate: "",
+  });
+  const [savingSocial, setSavingSocial] = useState(false);
+
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -102,6 +116,19 @@ function DashboardPage() {
     setAllowed(role.data === true);
     setProjects(projectRows.data ?? []);
     setSettings(settingRow.data);
+
+    if (settingRow.data?.social_links) {
+      const raw = (settingRow.data.social_links || {}) as Record<string, string>;
+      setSocialLinks({
+        youtube: raw["youtube"] || "",
+        tiktok: raw["tiktok"] || "",
+        twitch: raw["twitch"] || "",
+        kick: raw["kick"] || "",
+        instagram: raw["instagram"] || "",
+        twitter: raw["twitter"] || "",
+        donate: raw["donate"] || "",
+      });
+    }
   }
 
   useEffect(() => {
@@ -147,6 +174,7 @@ function DashboardPage() {
   }
 
   function edit(project: Project) {
+    setActiveTab("projects");
     setEditing(project.id);
     setForm({
       title: project.title,
@@ -184,6 +212,7 @@ function DashboardPage() {
         eyebrow: settings.eyebrow,
         headline: settings.headline,
         description: settings.description,
+        social_links: socialLinks,
         updated_by: user.id,
       })
       .eq("id", "main");
@@ -196,9 +225,28 @@ function DashboardPage() {
     }
   }
 
+  async function saveSocialLinks() {
+    setSavingSocial(true);
+    const { error } = await supabase
+      .from("site_settings")
+      .update({
+        social_links: socialLinks,
+        updated_by: user.id,
+      })
+      .eq("id", "main");
+
+    setSavingSocial(false);
+    if (error) {
+      toast.error(`Erro ao salvar redes sociais: ${error.message}`);
+    } else {
+      toast.success("Links das redes sociais salvos com sucesso!");
+      await load();
+    }
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
-    await navigate({ to: "/auth", replace: true });
+    await navigate({ to: "/auth", search: { unauthorized: false }, replace: true });
   }
 
   if (allowed === null) {
@@ -224,6 +272,203 @@ function DashboardPage() {
       </main>
     );
   }
+
+  const configuredSocialCount = Object.values(socialLinks).filter(
+    (u) => typeof u === "string" && u.trim().length > 0
+  ).length;
+
+  const renderHeroSettings = () => (
+    <section className="glass-deep rounded-3xl p-6 sm:p-8 border border-border/40 shadow-xl flex flex-col justify-between">
+      <div>
+        <div className="mb-6 flex items-center gap-2.5 border-b border-border/30 pb-4">
+          <div className="grid size-9 place-items-center rounded-xl bg-accent/15 text-accent">
+            <Sparkles className="size-5" />
+          </div>
+          <div>
+            <h2 className="font-display text-xl font-semibold">Textos da Central (Hero & Hub)</h2>
+            <p className="text-xs text-muted-foreground">
+              Modifique em tempo real as frases demarcadas na vitrine.
+            </p>
+          </div>
+        </div>
+
+        {settings && (
+          <div className="space-y-4">
+            <Field label="Nome da Central (Header e Rodapé)">
+              <Input
+                value={settings.hub_name}
+                onChange={(e) => setSettings({ ...settings, hub_name: e.target.value })}
+              />
+            </Field>
+
+            <Field label="Frase de Destaque (Badge / Eyebrow)">
+              <Input
+                value={settings.eyebrow}
+                placeholder="Ex: Uma lente viva para cada criação"
+                onChange={(e) => setSettings({ ...settings, eyebrow: e.target.value })}
+              />
+            </Field>
+
+            <Field label="Título Principal (Headline do Hero)">
+              <Textarea
+                rows={2}
+                value={settings.headline}
+                placeholder="Ex: Um universo de projetos, reunido em um só lugar."
+                onChange={(e) => setSettings({ ...settings, headline: e.target.value })}
+              />
+            </Field>
+
+            <Field label="Descrição Principal (Subtítulo do Hero)">
+              <Textarea
+                rows={3}
+                value={settings.description}
+                placeholder="Ex: Explore sites, sistemas, mods, experiências de web design..."
+                onChange={(e) => setSettings({ ...settings, description: e.target.value })}
+              />
+            </Field>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6 border-t border-border/30 pt-4">
+        <Button onClick={saveSettings} disabled={saving} className="w-full font-semibold">
+          {saving ? <LoaderCircle className="mr-2 size-4 animate-spin" /> : <Save className="mr-2 size-4" />}
+          Salvar Textos do Hub
+        </Button>
+      </div>
+    </section>
+  );
+
+  const renderSocialSettings = () => (
+    <section className="glass-deep rounded-3xl p-6 sm:p-8 border border-border/40 shadow-xl">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border/30 pb-4">
+        <div className="flex items-center gap-2.5">
+          <div className="grid size-9 place-items-center rounded-xl bg-primary/10 text-primary">
+            <Globe className="size-5" />
+          </div>
+          <div>
+            <h2 className="font-display text-xl font-semibold">Redes Sociais & Canais Oficiais</h2>
+            <p className="text-xs text-muted-foreground">
+              Cadastre os links para YouTube, TikTok, Twitch, Kick, Instagram, X/Twitter e Doação (Donate).
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full border border-border/50 bg-foreground/5 px-3 py-1 text-xs text-muted-foreground">
+            {configuredSocialCount} de 7 canais ativos
+          </span>
+        </div>
+      </div>
+
+      {/* Pré-visualização ao vivo em Liquid Glass */}
+      <div className="mb-8 rounded-2xl border border-border/40 bg-background/50 p-5 backdrop-blur-md">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+            <Sparkles className="size-3.5 text-accent" /> Pré-visualização da Barra Liquid Glass no Cabeçalho
+          </span>
+          <span className="text-[11px] text-muted-foreground">Atualiza em tempo real</span>
+        </div>
+        <div className="flex items-center justify-center rounded-xl border border-dashed border-border/60 py-6 bg-background/30">
+          <SocialNav links={socialLinks} showAll={true} />
+        </div>
+      </div>
+
+      {/* Grade de Redes Sociais com SVGs e inputs */}
+      <div className="grid gap-5 sm:grid-cols-2">
+        {SOCIAL_NETWORKS.map((network) => {
+          const val = socialLinks[network.id] || "";
+          const isSet = Boolean(val.trim());
+
+          return (
+            <div
+              key={network.id}
+              className={`rounded-2xl border p-4 transition-all duration-200 ${
+                isSet
+                  ? "border-primary/30 bg-primary/5 shadow-xs"
+                  : "border-border/40 bg-foreground/2 hover:border-border/60"
+              }`}
+            >
+              <div className="mb-2.5 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className={`grid size-8 place-items-center rounded-lg border border-border/40 bg-background/60 text-foreground ${network.hoverColor}`}>
+                    <network.icon className="size-4" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-semibold text-foreground">{network.name}</span>
+                    <p className="text-[10px] text-muted-foreground">
+                      {network.id === "donate"
+                        ? "Link para LivePix, Apoia.se, PayPal, Ko-fi, etc."
+                        : "Link direto para seu perfil/canal"}
+                    </p>
+                  </div>
+                </div>
+
+                {isSet ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-medium text-emerald-400">
+                    <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" /> Ativo
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-muted/40 px-2 py-0.5 text-[10px] text-muted-foreground">
+                    Oculto
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Input
+                  type="url"
+                  value={val}
+                  placeholder={
+                    network.id === "donate"
+                      ? "https://livepix.gg/... ou https://ko-fi.com/..."
+                      : `https://${network.id === "twitter" ? "x.com" : network.id + ".com"}/...`
+                  }
+                  onChange={(e) =>
+                    setSocialLinks((prev) => ({
+                      ...prev,
+                      [network.id]: e.target.value,
+                    }))
+                  }
+                  className="h-9 text-xs"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!isSet}
+                  onClick={() => {
+                    if (isSet) window.open(val, "_blank", "noopener,noreferrer");
+                  }}
+                  title={isSet ? "Testar link em nova aba" : "Preencha a URL para testar"}
+                  className="h-9 shrink-0 px-2.5 text-xs"
+                >
+                  <ExternalLink className="size-3.5" />
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-border/30 pt-5">
+        <p className="text-xs text-muted-foreground">
+          Ao salvar, os dados são persistidos no Supabase e os ícones com hover aparecem no topo do site.
+        </p>
+        <Button
+          onClick={saveSocialLinks}
+          disabled={savingSocial}
+          className="font-semibold px-6 shadow-md shadow-primary/20"
+        >
+          {savingSocial ? (
+            <LoaderCircle className="mr-2 size-4 animate-spin" />
+          ) : (
+            <Save className="mr-2 size-4" />
+          )}
+          Salvar Redes Sociais
+        </Button>
+      </div>
+    </section>
+  );
 
   return (
     <main className="min-h-screen bg-background px-4 py-8 sm:px-8 lg:px-12">
@@ -252,10 +497,62 @@ function DashboardPage() {
           </div>
         </header>
 
-        {/* Grade de Configuração */}
-        <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          {/* Formulário de Projeto */}
-          <section className="glass-deep rounded-3xl p-6 sm:p-8 border border-border/40 shadow-xl">
+        {/* Abas de Navegação do Painel */}
+        <div className="mb-8 flex flex-wrap items-center gap-2 rounded-2xl border border-border/40 bg-foreground/5 p-1.5 backdrop-blur-md">
+          <button
+            type="button"
+            onClick={() => setActiveTab("projects")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all ${
+              activeTab === "projects"
+                ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+            }`}
+          >
+            <Plus className="size-4" /> Projetos do Catálogo ({projects.length})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("hero")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all ${
+              activeTab === "hero"
+                ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+            }`}
+          >
+            <Sparkles className="size-4" /> Textos da Central (Hero & Hub)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("social")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all ${
+              activeTab === "social"
+                ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+            }`}
+          >
+            <Globe className="size-4" /> Redes Sociais & Links ({configuredSocialCount}/7)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("all")}
+            className={`ml-auto hidden md:flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition-all ${
+              activeTab === "all"
+                ? "bg-foreground/15 text-foreground font-semibold"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Visão Completa
+          </button>
+        </div>
+
+        {/* Visão de Projetos */}
+        {(activeTab === "projects" || activeTab === "all") && (
+          <div className={activeTab === "all" ? "grid gap-8 lg:grid-cols-[1.1fr_0.9fr] mb-8" : "mb-8"}>
+            {/* Formulário de Projeto */}
+            <section className="glass-deep rounded-3xl p-6 sm:p-8 border border-border/40 shadow-xl">
             <div className="mb-6 flex items-center justify-between border-b border-border/30 pb-4">
               <div className="flex items-center gap-2.5">
                 <div className="grid size-9 place-items-center rounded-xl bg-primary/10 text-primary">
@@ -518,69 +815,27 @@ function DashboardPage() {
             </form>
           </section>
 
-          {/* Gerenciamento dos Textos da Central */}
-          <section className="glass-deep rounded-3xl p-6 sm:p-8 border border-border/40 shadow-xl flex flex-col justify-between">
-            <div>
-              <div className="mb-6 flex items-center gap-2.5 border-b border-border/30 pb-4">
-                <div className="grid size-9 place-items-center rounded-xl bg-accent/15 text-accent">
-                  <Sparkles className="size-5" />
-                </div>
-                <div>
-                  <h2 className="font-display text-xl font-semibold">Textos da Central (Hero & Hub)</h2>
-                  <p className="text-xs text-muted-foreground">
-                    Modifique em tempo real as frases demarcadas na vitrine.
-                  </p>
-                </div>
-              </div>
-
-              {settings && (
-                <div className="space-y-4">
-                  <Field label="Nome da Central (Header e Rodapé)">
-                    <Input
-                      value={settings.hub_name}
-                      onChange={(e) => setSettings({ ...settings, hub_name: e.target.value })}
-                    />
-                  </Field>
-
-                  <Field label="Frase de Destaque (Badge / Eyebrow)">
-                    <Input
-                      value={settings.eyebrow}
-                      placeholder="Ex: Uma lente viva para cada criação"
-                      onChange={(e) => setSettings({ ...settings, eyebrow: e.target.value })}
-                    />
-                  </Field>
-
-                  <Field label="Título Principal (Headline do Hero)">
-                    <Textarea
-                      rows={2}
-                      value={settings.headline}
-                      placeholder="Ex: Um universo de projetos, reunido em um só lugar."
-                      onChange={(e) => setSettings({ ...settings, headline: e.target.value })}
-                    />
-                  </Field>
-
-                  <Field label="Descrição Principal (Subtítulo do Hero)">
-                    <Textarea
-                      rows={3}
-                      value={settings.description}
-                      placeholder="Ex: Explore sites, sistemas, mods, experiências de web design..."
-                      onChange={(e) => setSettings({ ...settings, description: e.target.value })}
-                    />
-                  </Field>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-6 border-t border-border/30 pt-4">
-              <Button onClick={saveSettings} disabled={saving} className="w-full font-semibold">
-                {saving ? <LoaderCircle className="mr-2 size-4 animate-spin" /> : <Save className="mr-2 size-4" />}
-                Salvar Textos do Hub
-              </Button>
-            </div>
-          </section>
+          {/* Se estiver em Visão Completa ('all'), exibe Textos da Central na segunda coluna */}
+          {activeTab === "all" && renderHeroSettings()}
         </div>
+      )}
 
-        {/* Listagem de Projetos Cadastrados */}
+      {/* Aba Isolada de Textos da Central */}
+      {activeTab === "hero" && (
+        <div className="max-w-3xl mx-auto mb-8">
+          {renderHeroSettings()}
+        </div>
+      )}
+
+      {/* Aba de Redes Sociais & Canais Oficiais */}
+      {(activeTab === "social" || activeTab === "all") && (
+        <div className={activeTab === "social" ? "max-w-4xl mx-auto mb-8" : "mb-8"}>
+          {renderSocialSettings()}
+        </div>
+      )}
+
+      {/* Listagem de Projetos Cadastrados (visível em 'projects' e 'all') */}
+      {(activeTab === "projects" || activeTab === "all") && (
         <section className="mt-12">
           <div className="mb-6 flex items-end justify-between">
             <div>
@@ -685,6 +940,7 @@ function DashboardPage() {
             )}
           </div>
         </section>
+      )}
       </div>
 
       {/* Modal de Pré-visualização do Projeto */}

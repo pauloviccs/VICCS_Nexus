@@ -10,8 +10,8 @@ import brandIcon from "@/assets/brand/VICCS_Design_Icon_BWR.svg";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
-  validateSearch: (search: Record<string, unknown>) => ({
-    unauthorized: search.unauthorized === true || search.unauthorized === "true",
+  validateSearch: (search: Record<string, unknown>): { unauthorized?: boolean | undefined } => ({
+    unauthorized: search["unauthorized"] === true || search["unauthorized"] === "true" ? true : undefined,
   }),
   beforeLoad: async ({ search }) => {
     // Se o usuário foi redirecionado por falta de cargo admin, não faz auto-redirecionamento

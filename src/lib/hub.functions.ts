@@ -6,13 +6,14 @@ export type HubProject = Database["public"]["Tables"]["projects"]["Row"];
 export type HubSettings = Database["public"]["Tables"]["site_settings"]["Row"];
 
 export const getPublicHub = createServerFn({ method: "GET" }).handler(async () => {
-  const url = process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"];
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
-
-  if (!url || !key) {
-    console.warn("[Hub] Variáveis do Supabase não configuradas no ambiente. Exibindo dados de fallback.");
-    return { projects: [], settings: null };
-  }
+  const url =
+    process.env["SUPABASE_URL"] ||
+    process.env["VITE_SUPABASE_URL"] ||
+    "https://vwrobrfkvwsdfjmyrdvp.supabase.co";
+  const key =
+    process.env["SUPABASE_PUBLISHABLE_KEY"] ||
+    process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+    "sb_publishable__pqei70PYV9fkeXvUyu0Vw_x0ue9wCj";
 
   try {
     const client = createClient<Database>(url, key, {
